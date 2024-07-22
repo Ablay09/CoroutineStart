@@ -1,6 +1,7 @@
 package com.example.coroutinestart
 
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.widget.Button
 import android.widget.ProgressBar
@@ -43,12 +44,14 @@ class MainActivity : AppCompatActivity() {
 	private fun synchronousCode() {
 		loadButton.isEnabled = false
 		progressBar.visibility = View.VISIBLE
+		Log.d("MainActivity", "Load started: $this")
 		loadCity { city ->
 			tvLocation.text = city
 			loadTemperature(city) { temperature ->
 				tvTemperature.text = temperature
 				progressBar.visibility = View.GONE
 				loadButton.isEnabled = true
+				Log.d("MainActivity", "Load finished: $this")
 			}
 		}
 	}
