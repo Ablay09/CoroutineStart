@@ -1,12 +1,23 @@
 package com.example.coroutinestart
 
 import android.os.Bundle
+import android.view.View
+import android.widget.Button
+import android.widget.ProgressBar
+import android.widget.TextView
+import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import kotlin.concurrent.thread
 
 class MainActivity : AppCompatActivity() {
+	private lateinit var tvLocation: TextView
+	private lateinit var tvTemperature: TextView
+	private lateinit var progressBar: ProgressBar
+	private lateinit var loadButton: Button
+
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
 		enableEdgeToEdge()
@@ -15,6 +26,45 @@ class MainActivity : AppCompatActivity() {
 			val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
 			v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
 			insets
+		}
+		initViews()
+		loadButton.setOnClickListener {
+			synchronousCode()
+		}
+	}
+
+	private fun initViews() {
+		tvLocation = findViewById(R.id.tv_location)
+		tvTemperature = findViewById(R.id.tv_temperature)
+		progressBar = findViewById(R.id.progress)
+		loadButton = findViewById(R.id.button_load)
+	}
+
+	private fun synchronousCode() {
+		loadButton.isEnabled = false
+		progressBar.visibility = View.VISIBLE
+		loadCity { city ->
+			tvLocation.text = city
+			loadTemperature(city) { temperature ->
+				tvTemperature.text = temperature
+				progressBar.visibility = View.GONE
+				loadButton.isEnabled = true
+			}
+		}
+	}
+
+	private fun loadCity(callback: (String) -> Unit) {
+		thread {
+			Thread.sleep(5000L)
+			callback("Almaty")
+		}
+	}
+
+	private fun loadTemperature(city: String, callback: (String) -> Unit) {
+		Toast.makeText(this, "Loading temperature for city: $city", Toast.LENGTH_SHORT).show()
+		thread {
+			Thread.sleep(5000L)
+			callback("35")
 		}
 	}
 }
