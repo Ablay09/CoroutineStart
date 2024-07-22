@@ -56,15 +56,24 @@ class MainActivity : AppCompatActivity() {
 	private fun loadCity(callback: (String) -> Unit) {
 		thread {
 			Thread.sleep(5000L)
-			callback("Almaty")
+			runOnUiThread {
+				callback("Almaty")
+			}
 		}
 	}
 
 	private fun loadTemperature(city: String, callback: (String) -> Unit) {
-		Toast.makeText(this, "Loading temperature for city: $city", Toast.LENGTH_SHORT).show()
 		thread {
+			runOnUiThread {
+				Toast.makeText(
+					this,
+					getString(R.string.loading_temperature_for_city, city), Toast.LENGTH_SHORT
+				).show()
+			}
 			Thread.sleep(5000L)
-			callback("35")
+			runOnUiThread {
+				callback("35")
+			}
 		}
 	}
 }

@@ -4,4 +4,5 @@
 	<string name="city">City:</string>
 	<string name="temperature">Temperature:</string>
 	<string name="loading_temperature_toast">Loading temperature for city: %s</string>
+	<string name="loading_temperature_for_city">Loading temperature for city: %1$s</string>
 </resources>
