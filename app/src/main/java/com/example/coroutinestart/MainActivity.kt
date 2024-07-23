@@ -11,6 +11,9 @@ import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlin.concurrent.thread
 
 class MainActivity : AppCompatActivity() {
@@ -30,7 +33,9 @@ class MainActivity : AppCompatActivity() {
 		}
 		initViews()
 		loadButton.setOnClickListener {
-			synchronousCode()
+			lifecycleScope.launch {
+				loadData()
+			}
 		}
 	}
 
@@ -41,42 +46,30 @@ class MainActivity : AppCompatActivity() {
 		loadButton = findViewById(R.id.button_load)
 	}
 
-	private fun synchronousCode() {
+	private suspend fun loadData() {
 		loadButton.isEnabled = false
 		progressBar.visibility = View.VISIBLE
 		Log.d("MainActivity", "Load started: $this")
-		loadCity { city ->
-			tvLocation.text = city
-			loadTemperature(city) { temperature ->
-				tvTemperature.text = temperature
-				progressBar.visibility = View.GONE
-				loadButton.isEnabled = true
-				Log.d("MainActivity", "Load finished: $this")
-			}
-		}
+		val city = loadCity()
+		tvLocation.text = city
+		val temperature = loadTemperature(city)
+		tvTemperature.text = temperature.toString()
+		progressBar.visibility = View.GONE
+		loadButton.isEnabled = true
+		Log.d("MainActivity", "Load finished: $this")
 	}
 
-	private fun loadCity(callback: (String) -> Unit) {
-		thread {
-			Thread.sleep(5000L)
-			runOnUiThread {
-				callback("Almaty")
-			}
-		}
+	private suspend fun loadCity(): String {
+		delay(5000L)
+		return "Almaty"
 	}
 
-	private fun loadTemperature(city: String, callback: (String) -> Unit) {
-		thread {
-			runOnUiThread {
-				Toast.makeText(
-					this,
-					getString(R.string.loading_temperature_for_city, city), Toast.LENGTH_SHORT
-				).show()
-			}
-			Thread.sleep(5000L)
-			runOnUiThread {
-				callback("35")
-			}
-		}
+	private suspend fun loadTemperature(city: String): Int {
+		Toast.makeText(
+			this,
+			getString(R.string.loading_temperature_for_city, city), Toast.LENGTH_SHORT
+		).show()
+		delay(5000L)
+		return 35
 	}
 }
