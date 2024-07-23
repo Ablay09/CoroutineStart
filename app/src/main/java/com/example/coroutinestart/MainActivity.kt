@@ -1,6 +1,8 @@
 package com.example.coroutinestart
 
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import android.view.View
 import android.widget.Button
@@ -33,9 +35,10 @@ class MainActivity : AppCompatActivity() {
 		}
 		initViews()
 		loadButton.setOnClickListener {
-			lifecycleScope.launch {
-				loadData()
-			}
+			loadDataWithoutCoroutine()
+//			lifecycleScope.launch {
+//				loadData()
+//			}
 		}
 	}
 
@@ -47,21 +50,58 @@ class MainActivity : AppCompatActivity() {
 	}
 
 	private suspend fun loadData() {
+		Log.d("MainActivity", "Load started: $this")
 		loadButton.isEnabled = false
 		progressBar.visibility = View.VISIBLE
-		Log.d("MainActivity", "Load started: $this")
 		val city = loadCity()
+
 		tvLocation.text = city
 		val temperature = loadTemperature(city)
+
 		tvTemperature.text = temperature.toString()
 		progressBar.visibility = View.GONE
 		loadButton.isEnabled = true
 		Log.d("MainActivity", "Load finished: $this")
 	}
 
+	private fun loadDataWithoutCoroutine(label: Int = 0, obj: Any? = null) {
+		when (label) {
+			0 -> {
+				Log.d("MainActivity", "Load started: $this")
+				loadButton.isEnabled = false
+				progressBar.visibility = View.VISIBLE
+				loadCityWithoutCoroutine {
+					loadDataWithoutCoroutine(1, it)
+				}
+			}
+
+			1 -> {
+				val city = obj as String
+				tvLocation.text = city
+				loadTemperatureWithoutCoroutine(city) {
+					loadDataWithoutCoroutine(2, it)
+				}
+			}
+
+			2 -> {
+				val temperature = obj as Int
+				tvTemperature.text = temperature.toString()
+				progressBar.visibility = View.GONE
+				loadButton.isEnabled = true
+				Log.d("MainActivity", "Load finished: $this")
+			}
+		}
+	}
+
 	private suspend fun loadCity(): String {
 		delay(5000L)
 		return "Almaty"
+	}
+
+	private fun loadCityWithoutCoroutine(callback: (String) -> Unit) {
+		Handler(Looper.getMainLooper()).postDelayed({
+			callback("Almaty")
+		}, 5000L)
 	}
 
 	private suspend fun loadTemperature(city: String): Int {
@@ -71,5 +111,17 @@ class MainActivity : AppCompatActivity() {
 		).show()
 		delay(5000L)
 		return 35
+	}
+
+	private fun loadTemperatureWithoutCoroutine(city: String, callback: (Int) -> Unit) {
+		runOnUiThread {
+			Toast.makeText(
+				this,
+				getString(R.string.loading_temperature_for_city, city), Toast.LENGTH_SHORT
+			).show()
+		}
+		Handler(Looper.getMainLooper()).postDelayed({
+			callback(35)
+		}, 5000L)
 	}
 }
