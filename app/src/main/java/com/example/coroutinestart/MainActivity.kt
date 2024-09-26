@@ -14,6 +14,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.concurrent.thread
@@ -35,10 +36,24 @@ class MainActivity : AppCompatActivity() {
 		}
 		initViews()
 		loadButton.setOnClickListener {
-			loadDataWithoutCoroutine()
-//			lifecycleScope.launch {
-//				loadData()
-//			}
+			progressBar.visibility = View.VISIBLE
+			loadButton.isEnabled = false
+			val jobCity: Job = lifecycleScope.launch {
+				val city = loadCity()
+				tvLocation.text = city
+			}
+			val jobTemp = lifecycleScope.launch {
+				val temperature = loadTemperature()
+				tvTemperature.text = temperature.toString()
+			}
+
+			lifecycleScope.launch {
+				jobCity.join()
+				jobTemp.join()
+
+				progressBar.visibility = View.GONE
+				loadButton.isEnabled = true
+			}
 		}
 	}
 
@@ -51,12 +66,11 @@ class MainActivity : AppCompatActivity() {
 
 	private suspend fun loadData() {
 		Log.d("MainActivity", "Load started: $this")
-		loadButton.isEnabled = false
-		progressBar.visibility = View.VISIBLE
+
 		val city = loadCity()
 
 		tvLocation.text = city
-		val temperature = loadTemperature(city)
+		val temperature = loadTemperature()
 
 		tvTemperature.text = temperature.toString()
 		progressBar.visibility = View.GONE
@@ -104,11 +118,7 @@ class MainActivity : AppCompatActivity() {
 		}, 5000L)
 	}
 
-	private suspend fun loadTemperature(city: String): Int {
-		Toast.makeText(
-			this,
-			getString(R.string.loading_temperature_for_city, city), Toast.LENGTH_SHORT
-		).show()
+	private suspend fun loadTemperature(): Int {
 		delay(5000L)
 		return 35
 	}
