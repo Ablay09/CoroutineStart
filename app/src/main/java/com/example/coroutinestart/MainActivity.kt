@@ -14,10 +14,10 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
-import kotlinx.coroutines.Job
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlin.concurrent.thread
 
 class MainActivity : AppCompatActivity() {
 	private lateinit var tvLocation: TextView
@@ -38,19 +38,22 @@ class MainActivity : AppCompatActivity() {
 		loadButton.setOnClickListener {
 			progressBar.visibility = View.VISIBLE
 			loadButton.isEnabled = false
-			val jobCity: Job = lifecycleScope.launch {
+			val deferredCity: Deferred<String> = lifecycleScope.async {
 				val city = loadCity()
 				tvLocation.text = city
+				city
 			}
-			val jobTemp = lifecycleScope.launch {
-				val temperature = loadTemperature()
-				tvTemperature.text = temperature.toString()
+			val deferredTemp: Deferred<Int> = lifecycleScope.async {
+				loadTemperature()
 			}
 
 			lifecycleScope.launch {
-				jobCity.join()
-				jobTemp.join()
+				val city = deferredCity.await()
+				val temp = deferredTemp.await()
 
+				tvTemperature.text = temp.toString()
+				Toast.makeText(this@MainActivity, "city = $city, temp = $temp", Toast.LENGTH_SHORT)
+					.show()
 				progressBar.visibility = View.GONE
 				loadButton.isEnabled = true
 			}
